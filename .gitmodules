@@ -1,0 +1,3 @@
+[submodule "thorin"]
+	path = thorin
+	url = https://github.com/AnyDSL/thorin.git

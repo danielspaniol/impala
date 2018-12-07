@@ -7,7 +7,7 @@ else()
     add_definitions("-Wall -Wextra")
 endif()
 
-find_package(Thorin REQUIRED)
+find_package(Thorin REQUIRED PATHS ${PROJECT_SOURCE_DIR}/thorin/build/share/anydsl/cmake)
 include_directories(${Thorin_INCLUDE_DIRS})
 
 if(LLVM_FOUND)
