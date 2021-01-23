@@ -726,6 +726,24 @@ void ForExpr::check(TypeSema& sema) const {
     error(expr(), "the looping expression does not support the 'for' protocol");
 }
 
+void DiffExpr::check(TypeSema& sema) const {
+    if (auto fn_ty = sema.check(expr())->isa<FnType>()) {
+        if (!fn_ty->is_returning()) {
+            error(expr(), "only functions with a return value can be differentiated");
+            return;
+        }
+
+        if (!is_float(fn_ty->return_type())) {
+            error(expr(), "only float scalar functions can be differentiated");
+            return;
+        }
+
+        return;
+    }
+
+    error(expr(), "only functions can be differentiated");
+}
+
 //------------------------------------------------------------------------------
 
 /*

@@ -68,7 +68,9 @@
     case Token::L_PAREN: \
     case Token::L_BRACE: \
     case Token::L_BRACKET: \
-    case Token::SIMD
+    case Token::SIMD: \
+    case Token::FWD_DIFF: \
+    case Token::BACK_DIFF
 
 #define STMT \
          Token::LET: \
@@ -247,6 +249,7 @@ public:
     const BlockExpr*    parse_block_expr();
     const BlockExpr*    try_block_expr(const std::string& context);
     const Expr*         parse_filter(const char* context);
+    const DiffExpr*     parse_diff_expr();
 
     // patterns
     const Ptrn*        parse_ptrn();
@@ -996,6 +999,8 @@ const Expr* Parser::parse_primary_expr() {
         case Token::IF:         return parse_if_expr();
         case Token::MATCH:      return parse_match_expr();
         case Token::FOR:        return parse_for_expr();
+        case Token::BACK_DIFF:  return parse_diff_expr();
+        case Token::FWD_DIFF:   return parse_diff_expr();
         case Token::WITH:       return parse_with_expr();
         case Token::WHILE:      return parse_while_expr();
         case Token::L_BRACE:    return parse_block_expr();
@@ -1252,6 +1257,20 @@ const Expr* Parser::parse_filter(const char* context) {
         filter = new LiteralExpr(lookahead().loc(), LiteralExpr::LIT_bool, false);
 
     return filter;
+}
+
+const DiffExpr* Parser::parse_diff_expr() {
+    auto tracker = track();
+
+    auto is_back = lookahead() == Token::BACK_DIFF;
+    eat(is_back ? Token::BACK_DIFF : Token::FWD_DIFF);
+
+    eat(Token::L_PAREN);
+    auto expr = parse_expr();
+    eat(Token::R_PAREN);
+
+    DiffExpr::Dir dir =  is_back ? DiffExpr::Dir::BACK : DiffExpr::Dir::FWD;
+    return new DiffExpr(tracker, expr, dir);
 }
 
 /*

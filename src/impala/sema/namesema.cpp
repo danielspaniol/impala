@@ -408,6 +408,10 @@ void ForExpr::bind(NameSema& sema) const {
     sema.pop_scope();
 }
 
+void DiffExpr::bind(NameSema& sema) const {
+    expr()->bind(sema);
+}
+
 //------------------------------------------------------------------------------
 
 /*

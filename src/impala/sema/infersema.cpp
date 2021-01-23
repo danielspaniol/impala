@@ -2,6 +2,7 @@
 
 #include "thorin/util/array.h"
 #include "thorin/util/iterator.h"
+#include "thorin/util/stream.h"
 
 #include "impala/ast.h"
 #include "impala/impala.h"
@@ -1008,6 +1009,59 @@ const Type* ForExpr::infer(InferSema& sema) const {
     }
 
     return sema.unit();
+}
+
+const Type *DiffExpr::infer(InferSema &sema) const {
+    if (auto fn_ty = sema.infer(expr())->isa<FnType>()) {
+        if (!fn_ty->is_returning()) {
+            return sema.type_error();
+        }
+
+        auto A = fn_ty->domain()->ops().skip_back();
+        Array<const Type *> B{fn_ty->last_param()->as<FnType>()->domain()};
+        // TODO: handle non scalar codomain
+
+        auto size_A = A.size();
+        auto size_B = B.size();
+
+        switch (dir_) {
+        // DS:  A → B            ⇒  A × A → B × B
+        // CPS: A × (B → ⊥) → ⊥  ⇒  A × A × (B × B → ⊥) → ⊥
+        case DiffExpr::Dir::FWD: {
+            Array<const Type *> codomain(
+                2 * size_B, [&B, size_B](size_t i) { return B[i % size_B]; });
+
+            Array<const Type *> domain(2 * size_A + 1, [&A, size_A, &codomain,
+                                                        &sema](size_t i) {
+                return i < 2 * size_A ? A[i % size_A] : sema.fn_type(codomain);
+            });
+
+            return sema.fn_type(domain);
+        }
+        // DS:  A → B            ⇒  A → B × (B → A)
+        // CPS: A × (B → ⊥) → ⊥  ⇒  A × (B × (B × (A → ⊥) → ⊥) → ⊥) → ⊥
+        case DiffExpr::Dir::BACK: {
+            Array<const Type *> fst(
+                size_B + 1, [&A, &B, size_B, &sema](size_t i) {
+                    return i < size_B ? B[i] : sema.fn_type(A);
+                });
+
+            Array<const Type *> snd(
+                size_B + 1, [&fst, &B, size_B, &sema](size_t i) {
+                    return i < size_B ? B[i] : sema.fn_type(fst);
+                });
+
+            Array<const Type *> thrd(
+                size_A + 1, [&snd, &A, size_A, &sema](size_t i) {
+                    return i < size_A ? A[i] : sema.fn_type(snd);
+                });
+
+            return sema.fn_type(thrd);
+        }
+        }
+    }
+
+    return sema.type_error();
 }
 
 //------------------------------------------------------------------------------

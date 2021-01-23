@@ -129,6 +129,9 @@ public:
     const thorin::Sigma*& thorin_struct_type(const StructType* type) { return struct_type_impala2thorin_[type]; }
     const thorin::Sigma*& thorin_enum_type(const EnumType* type) { return enum_type_impala2thorin_[type]; }
 
+    const thorin::Def* back_diff(const Def* fn, const Def* dbg) { return world.op_backdiff(fn, dbg); }
+    const thorin::Def* fwd_diff(const Def* fn, const Def* dbg) { return world.op_fwddiff(fn, dbg); }
+
     World& world;
     const Fn* cur_fn = nullptr;
     TypeMap<const thorin::Def*> impala2thorin_;
@@ -1060,6 +1063,12 @@ const Def* ForExpr::remit(CodeGen& cg) const {
             args[i] = break_bb->var(i+1);
         return cg.world.tuple(args, cg.loc2dbg(loc()));
     }
+}
+
+const Def* DiffExpr::remit(CodeGen& cg) const {
+    auto expr = expr_->remit(cg);
+    return dir_ == DiffExpr::Dir::FWD ? cg.fwd_diff(expr, cg.loc2dbg(loc()))
+                                      : cg.back_diff(expr, cg.loc2dbg(loc()));
 }
 
 const Def* FnExpr::remit(CodeGen& cg) const {

@@ -426,6 +426,10 @@ Stream& MatchExpr::stream(Stream& s) const { return s.fmt("match {} {{\t\n{,\n}\
 Stream& WhileExpr::stream(Stream& s) const { return s.fmt("while {} {}", cond(), body()); }
 Stream& ForExpr::stream(Stream& s) const { return s.fmt("for {} in {} {}", fn_expr()->params().skip_back(), expr(), fn_expr()->body()); }
 
+Stream& DiffExpr::stream(Stream& s) const { 
+    return s.fmt("{}({})", dir_ == DiffExpr::Dir::FWD ? "fwd_diff" : "back_diff", expr_);
+}
+
 /*
  * patterns
  */

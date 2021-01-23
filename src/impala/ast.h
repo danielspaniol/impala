@@ -1851,6 +1851,31 @@ private:
     std::unique_ptr<const LocalDecl> break_decl_;
 };
 
+class DiffExpr : public Expr {
+public:
+    enum class Dir { FWD, BACK };
+
+    DiffExpr(Loc loc, const Expr* expr, Dir dir)
+        : Expr(loc)
+        , expr_(dock(expr_, expr))
+        , dir_(dir)
+    {}
+
+    const Expr* expr() const { return expr_.get(); }
+
+    bool has_side_effect() const override;
+    void bind(NameSema&) const override;
+    Stream& stream(Stream&) const override;
+
+private:
+    const Type* infer(InferSema&) const override;
+    void check(TypeSema&) const override;
+    const thorin::Def* remit(CodeGen&) const override;
+
+    std::unique_ptr<const Expr> expr_;
+    Dir dir_;
+};
+
 //------------------------------------------------------------------------------
 
 /*

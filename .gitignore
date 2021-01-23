@@ -3,3 +3,5 @@ build*
 html
 test/config*
 test/__pycache__
+.cache/
+compile_commands.json

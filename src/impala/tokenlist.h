@@ -104,6 +104,8 @@ IMPALA_KEY(TYPEDEF,   "type")
 IMPALA_KEY(TYPEOF,    "typeof")
 IMPALA_KEY(WHILE,     "while")
 IMPALA_KEY(SIMD,      "simd")
+IMPALA_KEY(BACK_DIFF, "back_diff")
+IMPALA_KEY(FWD_DIFF,  "fwd_diff")
 
 #undef IMPALA_KEY
 
